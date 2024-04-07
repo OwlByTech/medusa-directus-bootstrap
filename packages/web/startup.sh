@@ -11,5 +11,7 @@ if [ $ENV = "prod" ]; then
   echo "Not implemented yet."
 else
   echo "------------ DEVELOPMENT MODE ------------"
-  yarn run dev
+  yarn run build
+  yarn start 
+  #yarn run dev
 fi

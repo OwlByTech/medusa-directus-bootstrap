@@ -1,4 +1,5 @@
 const dotenv = require("dotenv");
+const dotenvExpand = require("dotenv-expand");
 
 let ENV_FILE_NAME = "";
 switch (process.env.NODE_ENV) {
@@ -18,7 +19,7 @@ switch (process.env.NODE_ENV) {
 }
 
 try {
-  dotenv.config({ path: process.cwd() + "/" + ENV_FILE_NAME });
+  dotenvExpand.expand(dotenv.config({ path: process.cwd() + "/" + ENV_FILE_NAME }));
 } catch (e) {}
 
 // CORS when consuming Medusa from admin
@@ -52,6 +53,15 @@ const plugins = [
       },
     },
   },
+  {
+    resolve: `medusa-payment-mercadopago`,
+    options: {
+      mercadopago_public_key: process.env.MERCADOPAGO_PUBLIC_KEY,
+      mercadopago_access_token: process.env.MERCADOPAGO_ACCESS_TOKEN,
+      mercadopago_success_back_url: process.env.MERCADOPAGO_SUCCESS_BACK_URL,
+      mercadopago_webhook_url: process.env.MERCADOPAGO_WEBHOOK_URL,
+    }
+  }
 ];
 
 const modules = {

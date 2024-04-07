@@ -6,9 +6,10 @@ import { OnApproveActions, OnApproveData } from "@paypal/paypal-js"
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js"
 import { useElements, useStripe } from "@stripe/react-stripe-js"
 import { placeOrder } from "@modules/checkout/actions"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import ErrorMessage from "../error-message"
 import Spinner from "@modules/common/icons/spinner"
+import { Wallet, initMercadoPago } from "@mercadopago/sdk-react"
 
 type PaymentButtonProps = {
   cart: Omit<Cart, "refundable_amount" | "refunded_total">,
@@ -18,10 +19,10 @@ type PaymentButtonProps = {
 const PaymentButton: React.FC<PaymentButtonProps> = ({ cart, 'data-testid': dataTestId }) => {
   const notReady =
     !cart ||
-    !cart.shipping_address ||
-    !cart.billing_address ||
-    !cart.email ||
-    cart.shipping_methods.length < 1
+      !cart.shipping_address ||
+      !cart.billing_address ||
+      !cart.email ||
+      cart.shipping_methods.length < 1
       ? true
       : false
 
@@ -34,10 +35,47 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ cart, 'data-testid': data
       return <ManualTestPaymentButton notReady={notReady} data-testid={dataTestId} />
     case "paypal":
       return <PayPalPaymentButton notReady={notReady} cart={cart} data-testid={dataTestId} />
+    case "mercadopago":
+      return <MercadoPagoButton notReady={notReady} cart={cart} data-testid={dataTestId} />
     default:
       return <Button disabled>Select a payment method</Button>
   }
 }
+
+const MercadoPagoButton = ({
+  cart,
+  notReady,
+  'data-testid': dataTestId
+}: {
+  cart: Omit<Cart, "refundable_amount" | "refunded_total">
+  notReady: boolean
+  'data-testid'?: string
+}) => {
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const session = cart.payment_session as PaymentSession
+  if (session.status === "authorized") {
+    placeOrder().catch(() => {
+      setErrorMessage("An error occurred, please try again.")
+      setSubmitting(false)
+    })
+  }
+
+  useEffect(() => {
+    initMercadoPago(session.data.public_key as string);
+  }, []);
+
+
+  return (
+    <>
+      <Wallet initialization={{ preferenceId: session.data.preference_id as string, redirectMode: "modal" }} />
+      <ErrorMessage error={errorMessage} data-testid="mercadopago-payment-error-message" />
+    </>
+  )
+}
+
+
 
 const StripePaymentButton = ({
   cart,

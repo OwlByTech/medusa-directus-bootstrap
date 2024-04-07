@@ -26,6 +26,7 @@ services:
         condition: service_healthy
     volumes:
       - ./packages/medusa:/app
+      - ../medusa-payment-mercadopago:/medusa-payment-mercadopago
     env_file: .env
     ports:
       - 7001:7001
